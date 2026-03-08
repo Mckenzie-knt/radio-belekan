@@ -98,6 +98,9 @@ export default function Admin() {
     supabase.from("shows").select("id, name").order("name").then(({ data }) => {
       if (data) setShows(data);
     });
+    supabase.from("contact_messages").select("*").order("created_at", { ascending: false }).then(({ data }) => {
+      if (data) setContactMessages(data as ContactMessage[]);
+    });
     loadEpisodes();
   }, [isAdmin, loadEpisodes]);
 
