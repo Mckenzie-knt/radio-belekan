@@ -39,7 +39,7 @@ export default function Contact() {
     }
 
     setLoading(true);
-    const { error } = await supabase.from("contact_messages").insert(result.data);
+    const { error } = await supabase.from("contact_messages").insert([result.data]);
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
