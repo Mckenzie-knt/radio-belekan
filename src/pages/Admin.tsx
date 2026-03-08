@@ -30,6 +30,28 @@ export default function Admin() {
   const [episodeDate, setEpisodeDate] = useState("");
   const [episodeFile, setEpisodeFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const uploadWithProgress = useCallback((fileName: string, file: File): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`Upload failed: ${xhr.statusText}`));
+      };
+      xhr.onerror = () => reject(new Error("Network error"));
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/episodes-audio/${fileName}`;
+      xhr.open("POST", url);
+      xhr.setRequestHeader("Authorization", `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`);
+      xhr.setRequestHeader("x-upsert", "false");
+      xhr.send(file);
+    });
+  }, []);
 
   useEffect(() => {
     if (!isAdmin) return;
