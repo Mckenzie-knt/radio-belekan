@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Upload, Radio, MessageCircle, Trash2 } from "lucide-react";
+import { Settings, Upload, Radio, MessageCircle, Trash2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,15 @@ interface Episode {
   show_name?: string;
 }
 
+interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  created_at: string;
+}
+
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
   const { setStreamUrl } = useAudio();
@@ -41,6 +50,7 @@ export default function Admin() {
   const [episodeFile, setEpisodeFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
 
   const uploadWithProgress = useCallback((fileName: string, file: File): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -87,6 +97,9 @@ export default function Admin() {
     });
     supabase.from("shows").select("id, name").order("name").then(({ data }) => {
       if (data) setShows(data);
+    });
+    supabase.from("contact_messages").select("*").order("created_at", { ascending: false }).then(({ data }) => {
+      if (data) setContactMessages(data as ContactMessage[]);
     });
     loadEpisodes();
   }, [isAdmin, loadEpisodes]);
@@ -195,6 +208,7 @@ export default function Admin() {
           <TabsTrigger value="stream" className="gap-2"><Radio className="h-4 w-4" /> Flux Radio</TabsTrigger>
           <TabsTrigger value="shows" className="gap-2"><MessageCircle className="h-4 w-4" /> Émissions</TabsTrigger>
           <TabsTrigger value="episodes" className="gap-2"><Upload className="h-4 w-4" /> Épisodes</TabsTrigger>
+          <TabsTrigger value="messages" className="gap-2"><Mail className="h-4 w-4" /> Messages</TabsTrigger>
         </TabsList>
 
         <TabsContent value="stream">
@@ -287,6 +301,46 @@ export default function Admin() {
                     <Button variant="ghost" size="icon" onClick={() => deleteEpisode(ep)} className="h-8 w-8 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10">
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="messages">
+          <div className="bg-card border border-border rounded-2xl p-8">
+            <h2 className="font-display text-xl mb-4">Messages de contact</h2>
+            {contactMessages.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun message pour le moment.</p>
+            ) : (
+              <div className="space-y-3">
+                {contactMessages.map(msg => (
+                  <div key={msg.id} className="p-4 rounded-lg bg-muted/50 space-y-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium">{msg.name}</span>
+                          <span className="text-xs text-muted-foreground">{msg.email}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {new Date(msg.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                        <p className="text-sm font-medium mt-2">{msg.subject}</p>
+                        <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{msg.message}</p>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={async () => {
+                        const { error } = await supabase.from("contact_messages").delete().eq("id", msg.id);
+                        if (error) {
+                          toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                        } else {
+                          setContactMessages(prev => prev.filter(m => m.id !== msg.id));
+                          toast({ title: "Message supprimé !" });
+                        }
+                      }} className="h-8 w-8 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
