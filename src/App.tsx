@@ -13,6 +13,7 @@ import Feedback from "./pages/Feedback";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Contact from "./pages/Contact";
+import Annonceurs from "./pages/Annonceurs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/annonceurs" element={<Annonceurs />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

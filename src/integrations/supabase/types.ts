@@ -236,6 +236,84 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsor_requests: {
+        Row: {
+          budget: string | null
+          company: string
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          budget?: string | null
+          company: string
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          budget?: string | null
+          company?: string
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: []
+      }
+      sponsors: {
+        Row: {
+          audio_url: string | null
+          banner_url: string | null
+          created_at: string
+          description: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          position: string
+          starts_at: string
+          website_url: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          banner_url?: string | null
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          position?: string
+          starts_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          banner_url?: string | null
+          created_at?: string
+          description?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          position?: string
+          starts_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
