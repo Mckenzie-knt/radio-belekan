@@ -1,0 +1,17 @@
+{
+  "name": "Radio Belekandekati",
+  "short_name": "Belekandekati",
+  "description": "Écoutez Radio Belekandekati en direct et en replay",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1410",
+  "theme_color": "#e05a1a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
