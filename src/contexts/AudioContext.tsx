@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AudioState {
   isPlaying: boolean;
@@ -30,6 +31,20 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     currentTrack: null,
     streamUrl: DEFAULT_STREAM,
   });
+
+  // Load stream URL from database
+  useEffect(() => {
+    supabase
+      .from("radio_config")
+      .select("value")
+      .eq("key", "stream_url")
+      .single()
+      .then(({ data }) => {
+        if (data?.value) {
+          setState(s => ({ ...s, streamUrl: data.value }));
+        }
+      });
+  }, []);
 
   useEffect(() => {
     audioRef.current = new Audio();
