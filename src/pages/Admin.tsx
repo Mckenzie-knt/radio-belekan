@@ -208,6 +208,7 @@ export default function Admin() {
           <TabsTrigger value="stream" className="gap-2"><Radio className="h-4 w-4" /> Flux Radio</TabsTrigger>
           <TabsTrigger value="shows" className="gap-2"><MessageCircle className="h-4 w-4" /> Émissions</TabsTrigger>
           <TabsTrigger value="episodes" className="gap-2"><Upload className="h-4 w-4" /> Épisodes</TabsTrigger>
+          <TabsTrigger value="messages" className="gap-2"><Mail className="h-4 w-4" /> Messages</TabsTrigger>
         </TabsList>
 
         <TabsContent value="stream">
