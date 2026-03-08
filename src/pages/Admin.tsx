@@ -27,6 +27,15 @@ interface Episode {
   show_name?: string;
 }
 
+interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  created_at: string;
+}
+
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
   const { setStreamUrl } = useAudio();
