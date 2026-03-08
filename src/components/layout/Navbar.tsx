@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Radio, Headphones, MessageCircle, Menu, X, LogOut, Shield } from "lucide-react";
+import { Radio, Headphones, MessageCircle, Menu, X, LogOut, Shield, Mail } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,6 +11,7 @@ const links = [
   { to: "/replay", label: "Replay", icon: Headphones },
   { to: "/live-chat", label: "Live Chat", icon: MessageCircle },
   { to: "/feedback", label: "Avis", icon: MessageCircle },
+  { to: "/contact", label: "Contact", icon: Mail },
 ];
 
 export default function Navbar() {
