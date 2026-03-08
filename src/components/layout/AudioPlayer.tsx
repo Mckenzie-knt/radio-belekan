@@ -1,4 +1,4 @@
-import { Play, Pause, Volume2, VolumeX, Radio } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, Radio, RotateCcw, RotateCw } from "lucide-react";
 import { useAudio } from "@/contexts/AudioContext";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,9 @@ function formatTime(seconds: number): string {
 
 export default function AudioPlayer() {
   const { isPlaying, isLive, currentTrack, volume, togglePlay, playLive, setVolume, currentTime, duration, seek } = useAudio();
+
+  const skipBack = () => seek(Math.max(0, currentTime - 10));
+  const skipForward = () => seek(Math.min(duration, currentTime + 10));
 
   const showProgress = !isLive && duration > 0;
 
@@ -62,7 +65,7 @@ export default function AudioPlayer() {
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           {!isLive && (
             <Button
               variant="ghost"
@@ -72,6 +75,11 @@ export default function AudioPlayer() {
               title="Écouter en direct"
             >
               <Radio className="h-4 w-4" />
+            </Button>
+          )}
+          {!isLive && duration > 0 && (
+            <Button variant="ghost" size="icon" onClick={skipBack} className="text-player-foreground hover:text-primary hover:bg-primary/10" title="-10s">
+              <RotateCcw className="h-4 w-4" />
             </Button>
           )}
           <Button
@@ -92,6 +100,11 @@ export default function AudioPlayer() {
               )}
             </AnimatePresence>
           </Button>
+          {!isLive && duration > 0 && (
+            <Button variant="ghost" size="icon" onClick={skipForward} className="text-player-foreground hover:text-primary hover:bg-primary/10" title="+10s">
+              <RotateCw className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
         {/* Volume */}
