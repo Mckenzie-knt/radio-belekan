@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { Radio, Headphones, MessageCircle, Menu, X } from "lucide-react";
+import { Radio, Headphones, MessageCircle, Menu, X, LogOut, Shield } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 import radioLogo from "@/assets/radio-logo.png";
 
 const links = [
@@ -15,6 +16,7 @@ const links = [
 export default function Navbar() {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const { user, profile, isAdmin, signOut } = useAuth();
 
   return (
     <nav className="sticky top-0 z-40 bg-background/80 backdrop-blur-xl border-b border-border">
@@ -28,11 +30,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-1">
           {links.map(l => (
             <Link key={l.to} to={l.to}>
-              <Button
-                variant={pathname === l.to ? "default" : "ghost"}
-                size="sm"
-                className="gap-2"
-              >
+              <Button variant={pathname === l.to ? "default" : "ghost"} size="sm" className="gap-2">
                 <l.icon className="h-4 w-4" />
                 {l.label}
               </Button>
@@ -41,9 +39,25 @@ export default function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-2">
-          <Link to="/auth">
-            <Button variant="outline" size="sm">Connexion</Button>
-          </Link>
+          {user ? (
+            <>
+              {isAdmin && (
+                <Link to="/admin">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                    <Shield className="h-4 w-4" /> Admin
+                  </Button>
+                </Link>
+              )}
+              <span className="text-sm text-muted-foreground">{profile?.display_name || user.email}</span>
+              <Button variant="outline" size="sm" onClick={signOut} className="gap-2">
+                <LogOut className="h-4 w-4" /> Déconnexion
+              </Button>
+            </>
+          ) : (
+            <Link to="/auth">
+              <Button variant="outline" size="sm">Connexion</Button>
+            </Link>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -70,9 +84,24 @@ export default function Navbar() {
                   </Button>
                 </Link>
               ))}
-              <Link to="/auth" onClick={() => setOpen(false)}>
-                <Button variant="outline" className="w-full">Connexion</Button>
-              </Link>
+              {user ? (
+                <>
+                  {isAdmin && (
+                    <Link to="/admin" onClick={() => setOpen(false)}>
+                      <Button variant="ghost" className="w-full justify-start gap-2">
+                        <Shield className="h-4 w-4" /> Admin
+                      </Button>
+                    </Link>
+                  )}
+                  <Button variant="outline" className="w-full" onClick={() => { signOut(); setOpen(false); }}>
+                    <LogOut className="h-4 w-4 mr-2" /> Déconnexion
+                  </Button>
+                </>
+              ) : (
+                <Link to="/auth" onClick={() => setOpen(false)}>
+                  <Button variant="outline" className="w-full">Connexion</Button>
+                </Link>
+              )}
             </div>
           </motion.div>
         )}

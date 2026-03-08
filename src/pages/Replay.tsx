@@ -1,30 +1,47 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Play, Pause, Calendar, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useAudio } from "@/contexts/AudioContext";
+import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
 
-// Mock data — sera remplacé par Lovable Cloud
-const SHOWS = ["Toutes", "Matinale", "Débat du Soir", "Culture & Tradition", "Musique Non-Stop"];
-
-const EPISODES = [
-  { id: "1", title: "Matinale du 5 Mars", show: "Matinale", date: "2026-03-05", url: "" },
-  { id: "2", title: "Débat: L'éducation rurale", show: "Débat du Soir", date: "2026-03-04", url: "" },
-  { id: "3", title: "Culture & Tradition - Ep 45", show: "Culture & Tradition", date: "2026-03-03", url: "" },
-  { id: "4", title: "Matinale du 3 Mars", show: "Matinale", date: "2026-03-03", url: "" },
-  { id: "5", title: "Musique Non-Stop Weekend", show: "Musique Non-Stop", date: "2026-03-01", url: "" },
-  { id: "6", title: "Débat: Agriculture moderne", show: "Débat du Soir", date: "2026-02-28", url: "" },
-];
+interface Episode {
+  id: string;
+  title: string;
+  audio_url: string;
+  date: string;
+  duration: number | null;
+  show_id: string | null;
+  shows?: { name: string } | null;
+}
 
 export default function Replay() {
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
+  const [shows, setShows] = useState<string[]>([]);
   const [selectedShow, setSelectedShow] = useState("Toutes");
   const [search, setSearch] = useState("");
   const { currentTrack, isPlaying, playTrack, togglePlay } = useAudio();
 
-  const filtered = EPISODES.filter(ep => {
-    const matchShow = selectedShow === "Toutes" || ep.show === selectedShow;
+  useEffect(() => {
+    const load = async () => {
+      const { data: episodeData } = await supabase
+        .from("episodes")
+        .select("*, shows(name)")
+        .order("date", { ascending: false });
+      if (episodeData) {
+        setEpisodes(episodeData as any);
+        const showNames = [...new Set(episodeData.map((e: any) => e.shows?.name).filter(Boolean))] as string[];
+        setShows(showNames);
+      }
+    };
+    load();
+  }, []);
+
+  const filtered = episodes.filter(ep => {
+    const showName = ep.shows?.name || "";
+    const matchShow = selectedShow === "Toutes" || showName === selectedShow;
     const matchSearch = ep.title.toLowerCase().includes(search.toLowerCase());
     return matchShow && matchSearch;
   });
@@ -36,19 +53,13 @@ export default function Replay() {
         <p className="text-muted-foreground mb-8">Retrouvez toutes les émissions passées de Radio Belekandekati.</p>
       </motion.div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4 mb-8">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Rechercher une émission..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-10"
-          />
+          <Input placeholder="Rechercher une émission..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
         </div>
         <div className="flex gap-2 flex-wrap">
-          {SHOWS.map(s => (
+          {["Toutes", ...shows].map(s => (
             <Badge
               key={s}
               variant={selectedShow === s ? "default" : "outline"}
@@ -61,10 +72,10 @@ export default function Replay() {
         </div>
       </div>
 
-      {/* Episodes list */}
       <div className="space-y-3">
         {filtered.map((ep, i) => {
-          const isCurrent = currentTrack?.title === ep.title;
+          const isCurrent = currentTrack?.url === ep.audio_url;
+          const showName = ep.shows?.name || "Émission";
           return (
             <motion.div
               key={ep.id}
@@ -80,11 +91,8 @@ export default function Replay() {
                 variant={isCurrent && isPlaying ? "default" : "outline"}
                 className="shrink-0 rounded-full"
                 onClick={() => {
-                  if (isCurrent) {
-                    togglePlay();
-                  } else {
-                    playTrack({ title: ep.title, show: ep.show, url: ep.url });
-                  }
+                  if (isCurrent) togglePlay();
+                  else playTrack({ title: ep.title, show: showName, url: ep.audio_url });
                 }}
               >
                 {isCurrent && isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 ml-0.5" />}
@@ -92,7 +100,7 @@ export default function Replay() {
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate">{ep.title}</p>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Badge variant="secondary" className="text-xs">{ep.show}</Badge>
+                  <Badge variant="secondary" className="text-xs">{showName}</Badge>
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
                     {new Date(ep.date).toLocaleDateString("fr-FR")}
