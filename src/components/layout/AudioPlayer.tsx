@@ -100,6 +100,11 @@ export default function AudioPlayer() {
               )}
             </AnimatePresence>
           </Button>
+          {!isLive && duration > 0 && (
+            <Button variant="ghost" size="icon" onClick={skipForward} className="text-player-foreground hover:text-primary hover:bg-primary/10" title="+10s">
+              <RotateCw className="h-4 w-4" />
+            </Button>
+          )}
         </div>
 
         {/* Volume */}
