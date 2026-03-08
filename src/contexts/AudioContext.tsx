@@ -7,6 +7,8 @@ interface AudioState {
   volume: number;
   currentTrack: { title: string; show?: string; url: string } | null;
   streamUrl: string;
+  currentTime: number;
+  duration: number;
 }
 
 interface AudioContextType extends AudioState {
@@ -16,6 +18,7 @@ interface AudioContextType extends AudioState {
   togglePlay: () => void;
   setVolume: (v: number) => void;
   setStreamUrl: (url: string) => void;
+  seek: (time: number) => void;
 }
 
 const AudioCtx = createContext<AudioContextType | null>(null);
@@ -30,6 +33,8 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     volume: 0.8,
     currentTrack: null,
     streamUrl: DEFAULT_STREAM,
+    currentTime: 0,
+    duration: 0,
   });
 
   // Load stream URL from database
@@ -47,10 +52,29 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    audioRef.current = new Audio();
-    audioRef.current.volume = state.volume;
+    const audio = new Audio();
+    audio.volume = state.volume;
+    audioRef.current = audio;
+
+    const onTimeUpdate = () => {
+      setState(s => ({ ...s, currentTime: audio.currentTime }));
+    };
+    const onLoadedMetadata = () => {
+      setState(s => ({ ...s, duration: audio.duration || 0 }));
+    };
+    const onDurationChange = () => {
+      setState(s => ({ ...s, duration: audio.duration || 0 }));
+    };
+
+    audio.addEventListener("timeupdate", onTimeUpdate);
+    audio.addEventListener("loadedmetadata", onLoadedMetadata);
+    audio.addEventListener("durationchange", onDurationChange);
+
     return () => {
-      audioRef.current?.pause();
+      audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      audio.removeEventListener("durationchange", onDurationChange);
+      audio.pause();
     };
   }, []);
 
@@ -59,7 +83,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     if (!audio) return;
     audio.src = state.streamUrl;
     audio.play();
-    setState(s => ({ ...s, isPlaying: true, isLive: true, currentTrack: { title: "En Direct", url: s.streamUrl } }));
+    setState(s => ({ ...s, isPlaying: true, isLive: true, currentTime: 0, duration: 0, currentTrack: { title: "En Direct", url: s.streamUrl } }));
   }, [state.streamUrl]);
 
   const playTrack = useCallback((track: { title: string; show?: string; url: string }) => {
@@ -67,7 +91,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     if (!audio) return;
     audio.src = track.url;
     audio.play();
-    setState(s => ({ ...s, isPlaying: true, isLive: false, currentTrack: track }));
+    setState(s => ({ ...s, isPlaying: true, isLive: false, currentTime: 0, duration: 0, currentTrack: track }));
   }, []);
 
   const pause = useCallback(() => {
@@ -95,8 +119,15 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     setState(s => ({ ...s, streamUrl: url }));
   }, []);
 
+  const seek = useCallback((time: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = time;
+    setState(s => ({ ...s, currentTime: time }));
+  }, []);
+
   return (
-    <AudioCtx.Provider value={{ ...state, playLive, playTrack, pause, togglePlay, setVolume, setStreamUrl }}>
+    <AudioCtx.Provider value={{ ...state, playLive, playTrack, pause, togglePlay, setVolume, setStreamUrl, seek }}>
       {children}
     </AudioCtx.Provider>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Upload, Radio, MessageCircle, Users, Trash2 } from "lucide-react";
+import { Settings, Upload, Radio, MessageCircle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,12 +18,22 @@ interface Show {
   name: string;
 }
 
+interface Episode {
+  id: string;
+  title: string;
+  date: string;
+  audio_url: string;
+  show_id: string | null;
+  show_name?: string;
+}
+
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
   const { setStreamUrl } = useAudio();
   const { toast } = useToast();
   const [streamUrlInput, setStreamUrlInput] = useState("");
   const [shows, setShows] = useState<Show[]>([]);
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [newShowName, setNewShowName] = useState("");
   const [episodeTitle, setEpisodeTitle] = useState("");
   const [episodeShowId, setEpisodeShowId] = useState("");
@@ -53,17 +63,33 @@ export default function Admin() {
     });
   }, []);
 
+  const loadEpisodes = useCallback(async () => {
+    const { data } = await supabase
+      .from("episodes")
+      .select("id, title, date, audio_url, show_id, shows(name)")
+      .order("date", { ascending: false });
+    if (data) {
+      setEpisodes(data.map((ep: any) => ({
+        id: ep.id,
+        title: ep.title,
+        date: ep.date,
+        audio_url: ep.audio_url,
+        show_id: ep.show_id,
+        show_name: ep.shows?.name,
+      })));
+    }
+  }, []);
+
   useEffect(() => {
     if (!isAdmin) return;
-    // Load stream URL
     supabase.from("radio_config").select("value").eq("key", "stream_url").single().then(({ data }) => {
       if (data) setStreamUrlInput(data.value);
     });
-    // Load shows
     supabase.from("shows").select("id, name").order("name").then(({ data }) => {
       if (data) setShows(data);
     });
-  }, [isAdmin]);
+    loadEpisodes();
+  }, [isAdmin, loadEpisodes]);
 
   if (loading) return null;
   if (!user || !isAdmin) return <Navigate to="/" replace />;
@@ -90,6 +116,31 @@ export default function Admin() {
       setShows(prev => [...prev, data]);
       setNewShowName("");
       toast({ title: "Émission créée !" });
+    }
+  };
+
+  const deleteShow = async (id: string) => {
+    const { error } = await supabase.from("shows").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } else {
+      setShows(prev => prev.filter(s => s.id !== id));
+      toast({ title: "Émission supprimée !" });
+    }
+  };
+
+  const deleteEpisode = async (ep: Episode) => {
+    // Extract storage file name from URL
+    const urlParts = ep.audio_url.split("/episodes-audio/");
+    if (urlParts[1]) {
+      await supabase.storage.from("episodes-audio").remove([decodeURIComponent(urlParts[1])]);
+    }
+    const { error } = await supabase.from("episodes").delete().eq("id", ep.id);
+    if (error) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    } else {
+      setEpisodes(prev => prev.filter(e => e.id !== ep.id));
+      toast({ title: "Épisode supprimé !" });
     }
   };
 
@@ -124,6 +175,7 @@ export default function Admin() {
       setEpisodeTitle("");
       setEpisodeFile(null);
       setEpisodeDate("");
+      loadEpisodes();
     }
     setUploading(false);
   };
@@ -170,8 +222,11 @@ export default function Admin() {
               <div className="mt-6 space-y-2">
                 <h3 className="text-sm font-medium text-muted-foreground">Émissions existantes</h3>
                 {shows.map(s => (
-                  <div key={s.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                  <div key={s.id} className="flex items-center justify-between gap-2 p-2 rounded-lg bg-muted/50">
                     <span className="text-sm">{s.name}</span>
+                    <Button variant="ghost" size="icon" onClick={() => deleteShow(s.id)} className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -216,6 +271,26 @@ export default function Admin() {
             <Button className="gap-2 rounded-full" onClick={uploadEpisode} disabled={uploading}>
               <Upload className="h-4 w-4" /> {uploading ? "Upload en cours..." : "Uploader l'épisode"}
             </Button>
+
+            {/* Episodes list */}
+            {episodes.length > 0 && (
+              <div className="mt-8 space-y-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Épisodes existants</h3>
+                {episodes.map(ep => (
+                  <div key={ep.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-muted/50">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{ep.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {ep.date}{ep.show_name ? ` · ${ep.show_name}` : ""}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => deleteEpisode(ep)} className="h-8 w-8 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>

@@ -4,8 +4,17 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 
+function formatTime(seconds: number): string {
+  if (!seconds || !isFinite(seconds)) return "0:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export default function AudioPlayer() {
-  const { isPlaying, isLive, currentTrack, volume, togglePlay, playLive, setVolume } = useAudio();
+  const { isPlaying, isLive, currentTrack, volume, togglePlay, playLive, setVolume, currentTime, duration, seek } = useAudio();
+
+  const showProgress = !isLive && duration > 0;
 
   return (
     <motion.div
@@ -13,6 +22,21 @@ export default function AudioPlayer() {
       animate={{ y: 0 }}
       className="fixed bottom-0 left-0 right-0 z-50 bg-player text-player-foreground border-t border-border/20 backdrop-blur-xl"
     >
+      {/* Progress bar on top of player */}
+      {showProgress && (
+        <div className="px-4 pt-2 flex items-center gap-2 text-xs text-player-foreground/70">
+          <span className="w-10 text-right tabular-nums">{formatTime(currentTime)}</span>
+          <Slider
+            value={[currentTime]}
+            max={duration}
+            step={0.5}
+            onValueChange={([v]) => seek(v)}
+            className="flex-1"
+          />
+          <span className="w-10 tabular-nums">{formatTime(duration)}</span>
+        </div>
+      )}
+
       <div className="container mx-auto flex items-center gap-4 px-4 py-3">
         {/* Live indicator / Track info */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
