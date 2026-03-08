@@ -76,7 +76,8 @@ export default function Admin() {
       return;
     }
     setUploading(true);
-    const fileName = `${Date.now()}-${episodeFile.name}`;
+    const sanitized = episodeFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const fileName = `${Date.now()}-${sanitized}`;
     const { error: uploadError } = await supabase.storage.from("episodes-audio").upload(fileName, episodeFile);
     if (uploadError) {
       toast({ title: "Erreur d'upload", description: uploadError.message, variant: "destructive" });
