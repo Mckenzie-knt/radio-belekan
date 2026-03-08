@@ -86,7 +86,7 @@ export default function Annonceurs() {
         <div className="bg-card border border-border rounded-2xl p-8">
           {sent ? (
             <div className="text-center py-8">
-              <CheckCircle className="h-14 w-14 text-green-500 mx-auto mb-4" />
+              <CheckCircle className="h-14 w-14 text-primary mx-auto mb-4" />
               <h2 className="font-display text-2xl mb-2">Demande envoyée !</h2>
               <p className="text-muted-foreground">Nous vous recontacterons dans les plus brefs délais.</p>
             </div>
