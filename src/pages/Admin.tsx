@@ -50,6 +50,7 @@ export default function Admin() {
   const [episodeFile, setEpisodeFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
 
   const uploadWithProgress = useCallback((fileName: string, file: File): Promise<void> => {
     return new Promise((resolve, reject) => {
