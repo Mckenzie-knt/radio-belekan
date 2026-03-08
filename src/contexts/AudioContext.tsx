@@ -19,7 +19,7 @@ interface AudioContextType extends AudioState {
 
 const AudioCtx = createContext<AudioContextType | null>(null);
 
-const DEFAULT_STREAM = "https://stream.zeno.fm/yn65fsaurfhvv";
+const DEFAULT_STREAM = "https://stream.zeno.fm/khzf1fg4muhvv";
 
 export function AudioProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
