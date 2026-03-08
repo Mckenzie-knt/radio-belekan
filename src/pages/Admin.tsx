@@ -99,12 +99,15 @@ export default function Admin() {
       return;
     }
     setUploading(true);
+    setUploadProgress(0);
     const sanitized = episodeFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const fileName = `${Date.now()}-${sanitized}`;
-    const { error: uploadError } = await supabase.storage.from("episodes-audio").upload(fileName, episodeFile);
-    if (uploadError) {
-      toast({ title: "Erreur d'upload", description: uploadError.message, variant: "destructive" });
+    try {
+      await uploadWithProgress(fileName, episodeFile);
+    } catch (err: any) {
+      toast({ title: "Erreur d'upload", description: err.message, variant: "destructive" });
       setUploading(false);
+      setUploadProgress(0);
       return;
     }
     const { data: urlData } = supabase.storage.from("episodes-audio").getPublicUrl(fileName);
