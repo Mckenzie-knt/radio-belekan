@@ -207,6 +207,12 @@ export default function Admin() {
                 <Input type="file" accept="audio/*" onChange={e => setEpisodeFile(e.target.files?.[0] || null)} />
               </div>
             </div>
+            {uploading && (
+              <div className="mb-4 space-y-1">
+                <Progress value={uploadProgress} className="h-3" />
+                <p className="text-sm text-muted-foreground text-right">{uploadProgress}%</p>
+              </div>
+            )}
             <Button className="gap-2 rounded-full" onClick={uploadEpisode} disabled={uploading}>
               <Upload className="h-4 w-4" /> {uploading ? "Upload en cours..." : "Uploader l'épisode"}
             </Button>
