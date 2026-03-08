@@ -307,6 +307,46 @@ export default function Admin() {
             )}
           </div>
         </TabsContent>
+
+        <TabsContent value="messages">
+          <div className="bg-card border border-border rounded-2xl p-8">
+            <h2 className="font-display text-xl mb-4">Messages de contact</h2>
+            {contactMessages.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucun message pour le moment.</p>
+            ) : (
+              <div className="space-y-3">
+                {contactMessages.map(msg => (
+                  <div key={msg.id} className="p-4 rounded-lg bg-muted/50 space-y-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium">{msg.name}</span>
+                          <span className="text-xs text-muted-foreground">{msg.email}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {new Date(msg.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                        <p className="text-sm font-medium mt-2">{msg.subject}</p>
+                        <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap">{msg.message}</p>
+                      </div>
+                      <Button variant="ghost" size="icon" onClick={async () => {
+                        const { error } = await supabase.from("contact_messages").delete().eq("id", msg.id);
+                        if (error) {
+                          toast({ title: "Erreur", description: error.message, variant: "destructive" });
+                        } else {
+                          setContactMessages(prev => prev.filter(m => m.id !== msg.id));
+                          toast({ title: "Message supprimé !" });
+                        }
+                      }} className="h-8 w-8 shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
       </Tabs>
     </div>
   );
