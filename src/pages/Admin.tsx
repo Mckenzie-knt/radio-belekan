@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Settings, Upload, Radio, MessageCircle, Users, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,6 +30,28 @@ export default function Admin() {
   const [episodeDate, setEpisodeDate] = useState("");
   const [episodeFile, setEpisodeFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const uploadWithProgress = useCallback((fileName: string, file: File): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          setUploadProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error(`Upload failed: ${xhr.statusText}`));
+      };
+      xhr.onerror = () => reject(new Error("Network error"));
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/episodes-audio/${fileName}`;
+      xhr.open("POST", url);
+      xhr.setRequestHeader("Authorization", `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`);
+      xhr.setRequestHeader("x-upsert", "false");
+      xhr.send(file);
+    });
+  }, []);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -76,12 +99,15 @@ export default function Admin() {
       return;
     }
     setUploading(true);
+    setUploadProgress(0);
     const sanitized = episodeFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
     const fileName = `${Date.now()}-${sanitized}`;
-    const { error: uploadError } = await supabase.storage.from("episodes-audio").upload(fileName, episodeFile);
-    if (uploadError) {
-      toast({ title: "Erreur d'upload", description: uploadError.message, variant: "destructive" });
+    try {
+      await uploadWithProgress(fileName, episodeFile);
+    } catch (err: any) {
+      toast({ title: "Erreur d'upload", description: err.message, variant: "destructive" });
       setUploading(false);
+      setUploadProgress(0);
       return;
     }
     const { data: urlData } = supabase.storage.from("episodes-audio").getPublicUrl(fileName);
@@ -181,6 +207,12 @@ export default function Admin() {
                 <Input type="file" accept="audio/*" onChange={e => setEpisodeFile(e.target.files?.[0] || null)} />
               </div>
             </div>
+            {uploading && (
+              <div className="mb-4 space-y-1">
+                <Progress value={uploadProgress} className="h-3" />
+                <p className="text-sm text-muted-foreground text-right">{uploadProgress}%</p>
+              </div>
+            )}
             <Button className="gap-2 rounded-full" onClick={uploadEpisode} disabled={uploading}>
               <Upload className="h-4 w-4" /> {uploading ? "Upload en cours..." : "Uploader l'épisode"}
             </Button>
