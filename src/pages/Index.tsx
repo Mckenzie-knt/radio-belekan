@@ -23,12 +23,12 @@ export default function Index() {
             className="text-center max-w-3xl mx-auto">
             
             <motion.img
-              src={radioLogo}
+
               alt="Radio Belekandekati"
               className="w-28 h-28 md:w-36 md:h-36 mx-auto mb-8 rounded-3xl shadow-2xl shadow-primary/30"
               initial={{ scale: 0.5, rotate: -10 }}
               animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", stiffness: 200, delay: 0.2 }} />
+              transition={{ type: "spring", stiffness: 200, delay: 0.2 }} src="/lovable-uploads/e2e3d978-e528-454a-82be-9218044d9cf0.png" />
             
 
             <h1 className="font-display text-4xl md:text-6xl lg:text-7xl tracking-tight mb-4">
