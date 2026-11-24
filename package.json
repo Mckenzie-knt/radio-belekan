@@ -15,9 +15,9 @@
   },
   "dependencies": {
     "@capacitor/android": "^8.5.1",
-    "@capacitor/app": "^8.2.4",
+    "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.1",
-    "@capacitor/splash-screen": "^8.2.4",
+    "@capacitor/splash-screen": "^8.0.2",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
