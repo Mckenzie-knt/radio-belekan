@@ -44,10 +44,15 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
-      - name: Build release AAB (unsigned)
+      - name: Build release AAB
         run: |
           cd android
           chmod +x gradlew
           ./gradlew bundleRelease
 
-      
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: radio-belekan-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+          retention-days: 30
