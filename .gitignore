@@ -12,6 +12,25 @@ dist
 dist-ssr
 *.local
 
+# Environment
+.env
+.env.*
+!.env.example
+
+# Capacitor / Android (regenere par la CI ou npx cap add android)
+android/app/debug
+android/app/release
+android/.gradle
+android/local.properties
+android/app/src/main/assets/*
+!android/app/src/main/assets/.gitkeep
+
+# Cles de signature (JAMAIS commit)
+*.keystore
+*.jks
+!debug.keystore
+keystore.properties
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
