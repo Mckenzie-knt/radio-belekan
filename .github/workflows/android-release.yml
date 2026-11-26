@@ -27,8 +27,8 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      # Android SDK deja preinstalle sur les runners ubuntu-latest (setup-android@v3
+      # echoue avec "Failed to find package 'tools'" sur les runners recents)
 
       - name: Install dependencies
         # npm install (et non npm ci) : package-lock.json n'est pas encore resynchronise
