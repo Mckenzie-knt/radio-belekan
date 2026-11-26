@@ -58,11 +58,45 @@ jobs:
           npx cap add android || true
           npx cap sync android
 
+      - name: Prepare upload keystore
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          if [ ! -n "$KEYSTORE_PASSWORD" ]; then
+            echo "ERREUR : secret KEYSTORE_PASSWORD manquant (Settings > Secrets and variables > Actions)"
+            exit 1
+          fi
+          if [ -f android-signing/upload-key.jks.enc ]; then
+            echo "Dechiffrement de la cle d'upload existante"
+            openssl enc -d -aes-256-cbc -pbkdf2 -in android-signing/upload-key.jks.enc -out upload-key.jks -pass pass:"$KEYSTORE_PASSWORD"
+          else
+            echo "Generation d'une nouvelle cle d'upload (premiere fois)"
+            keytool -genkeypair -v -keystore upload-key.jks -storepass "$KEYSTORE_PASSWORD" -keypass "$KEYSTORE_PASSWORD" -alias upload -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Radio Belekan de Kati, O=Radio Belekan, L=Kati, C=ML"
+            mkdir -p android-signing
+            openssl enc -e -aes-256-cbc -pbkdf2 -in upload-key.jks -out android-signing/upload-key.jks.enc -pass pass:"$KEYSTORE_PASSWORD"
+            git config user.name "ci-signing"
+            git config user.email "ci-signing@users.noreply.github.com"
+            git add android-signing/upload-key.jks.enc
+            git commit -m "ci: add encrypted upload signing key (Play App Signing upload key)"
+            git push origin HEAD:refs/heads/main
+          fi
+
       - name: Build release AAB
         run: |
           cd android
           chmod +x gradlew
+          # versionCode unique par run pour Play Store
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" app/build.gradle 2>/dev/null || true
+          sed -i "s/versionCode = 1/versionCode = ${{ github.run_number }}/" app/build.gradle 2>/dev/null || true
           ./gradlew bundleRelease
+
+      - name: Sign AAB (upload key)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          jarsigner -keystore upload-key.jks -storepass "$KEYSTORE_PASSWORD" "$AAB" upload
+          jarsigner -verify "$AAB" && echo "AAB signe avec succes"
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
