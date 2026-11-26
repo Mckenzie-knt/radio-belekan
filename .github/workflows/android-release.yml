@@ -38,8 +38,8 @@ jobs:
             git config user.name "ci-debug"
             git config user.email "ci-debug@users.noreply.github.com"
             mkdir -p debug
-            cp install.log debug/install-failure.log
-            git add debug/install-failure.log
+            cp install.log debug/install-failure.txt
+            git add -f debug/install-failure.txt
             git commit -m "ci-debug: log d'echec npm install (run ${{ github.run_id }})"
             git push origin HEAD:refs/heads/ci-debug --force || true
             exit 1
