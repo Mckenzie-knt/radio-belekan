@@ -11,6 +11,9 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    # Autorise le GITHUB_TOKEN a commiter la cle d'upload chiffree dans le repo
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
