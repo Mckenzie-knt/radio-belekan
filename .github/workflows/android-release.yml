@@ -2,6 +2,8 @@ name: Android Release Build
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
@@ -35,9 +37,9 @@ jobs:
         run: npm run build
         env:
           # Cles publiques (anon) Supabase, embarquees dans le bundle par conception
-          VITE_SUPABASE_PROJECT_ID: ${{ vars.VITE_SUPABASE_PROJECT_ID }}
-          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PROJECT_ID: ${{ vars.VITE_SUPABASE_PROJECT_ID || 'nvhmllceypaezrlnurvo' }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://nvhmllceypaezrlnurvo.supabase.co' }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52aG1sbGNleXBhZXpybG51cnZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5NzQxMzcsImV4cCI6MjA4ODU1MDEzN30.l8I3vq6iD0HGz5B4jKNc78uS17fjcNPhqkmSfNv-94k' }}
 
       - name: Add and sync Android platform
         run: |
