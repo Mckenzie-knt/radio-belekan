@@ -1,5 +1,46 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Capacitor } from "@capacitor/core";
+import { BackgroundMode } from "@anuradev/capacitor-background-mode";
+
+// Active le service de lecture en arriere-plan (Android/iOS) pour que le flux continue quand l app est minimisee
+async function activateBackgroundMode(trackTitle: string) {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    const perm = await BackgroundMode.checkNotificationsPermission();
+    if (perm.notifications === "prompt") {
+      await BackgroundMode.requestNotificationsPermission();
+    }
+    await BackgroundMode.enable({
+      title: "Radio Belekan de Kati",
+      text: trackTitle,
+      subText: "Radio Belekan de Kati",
+      bigText: true,
+      resume: true,
+      silent: true,
+      hidden: false,
+      channelName: "Lecture en cours",
+      channelDescription: "Notification de lecture de la radio en arriere-plan",
+      allowClose: true,
+      closeTitle: "Arreter",
+      showWhen: false,
+      visibility: "public",
+      disableWebViewOptimization: false,
+      allowMicrophoneInBackground: false,
+    });
+  } catch (e) {
+    console.warn("BackgroundMode enable failed", e);
+  }
+}
+
+async function deactivateBackgroundMode() {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    await BackgroundMode.disable();
+  } catch (e) {
+    console.warn("BackgroundMode disable failed", e);
+  }
+}
 
 interface AudioState {
   isPlaying: boolean;
@@ -83,6 +124,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     if (!audio) return;
     audio.src = state.streamUrl;
     audio.play();
+    activateBackgroundMode("En direct");
     setState(s => ({ ...s, isPlaying: true, isLive: true, currentTime: 0, duration: 0, currentTrack: { title: "En Direct", url: s.streamUrl } }));
   }, [state.streamUrl]);
 
@@ -91,11 +133,13 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
     if (!audio) return;
     audio.src = track.url;
     audio.play();
+    activateBackgroundMode(track.title);
     setState(s => ({ ...s, isPlaying: true, isLive: false, currentTime: 0, duration: 0, currentTrack: track }));
   }, []);
 
   const pause = useCallback(() => {
     audioRef.current?.pause();
+    deactivateBackgroundMode();
     setState(s => ({ ...s, isPlaying: false }));
   }, []);
 
@@ -104,6 +148,7 @@ export function AudioProvider({ children }: { children: React.ReactNode }) {
       pause();
     } else if (state.currentTrack) {
       audioRef.current?.play();
+      activateBackgroundMode(state.currentTrack.title);
       setState(s => ({ ...s, isPlaying: true }));
     } else {
       playLive();
