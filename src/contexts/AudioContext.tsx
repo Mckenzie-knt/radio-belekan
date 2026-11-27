@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useRef, useCallback, useEff
 import { supabase } from "@/integrations/supabase/client";
 import { Capacitor } from "@capacitor/core";
 import { BackgroundMode } from "@anuradev/capacitor-background-mode";
+import { toast } from "sonner";
 
 // Demande a l OS d exclure l app des optimisations batterie (Xiaomi/Huawei/Oppo)
 async function disablePowerOptimizations() {
@@ -16,6 +17,10 @@ async function disablePowerOptimizations() {
 // Active le service de lecture en arriere-plan (Android/iOS) pour que le flux continue quand l app est minimisee
 async function activateBackgroundMode(trackTitle: string) {
   if (!Capacitor.isNativePlatform()) return;
+  if (!Capacitor.isPluginAvailable("BackgroundMode")) {
+    toast.error("Plugin arriere-plan ABSENT de cette build (build incomplète)");
+    return;
+  }
   try {
     const perm = await BackgroundMode.checkNotificationsPermission();
     if (perm.notifications === "prompt") {
@@ -39,8 +44,10 @@ async function activateBackgroundMode(trackTitle: string) {
       disableWebViewOptimization: false,
       allowMicrophoneInBackground: false,
     });
+    toast.success("Service arriere-plan actif, vous pouvez minimiser l application");
   } catch (e) {
     console.warn("BackgroundMode enable failed", e);
+    toast.error("Erreur arriere-plan : " + String((e as Error)?.message ?? e));
   }
 }
 
