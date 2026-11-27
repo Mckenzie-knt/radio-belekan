@@ -101,9 +101,26 @@ jobs:
           jarsigner -keystore upload-key.jks -storepass "$KEYSTORE_PASSWORD" "$AAB" upload
           jarsigner -verify "$AAB" && echo "AAB signe avec succes"
 
+      - name: Build and sign APK (installation directe / test local)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          cd android
+          ./gradlew assembleRelease
+          APKSIGNER=$(ls "$ANDROID_HOME/build-tools/"*/apksigner | head -1)
+          "$APKSIGNER" sign --ks ../upload-key.jks --ks-pass "pass:$KEYSTORE_PASSWORD" app/build/outputs/apk/release/app-release-unsigned.apk
+          mv app/build/outputs/apk/release/app-release-unsigned.apk app/build/outputs/apk/release/radio-belekan.apk
+
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
           name: radio-belekan-aab
           path: android/app/build/outputs/bundle/release/*.aab
+          retention-days: 30
+
+      - name: Upload APK artifact (test local)
+        uses: actions/upload-artifact@v4
+        with:
+          name: radio-belekan-apk
+          path: android/app/build/outputs/apk/release/radio-belekan.apk
           retention-days: 30
